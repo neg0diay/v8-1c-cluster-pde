@@ -24,8 +24,8 @@ require (
 	github.com/mattn/go-isatty v0.0.12 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/prometheus/client_golang v1.11.0
-	github.com/prometheus/client_model v0.2.0
-	github.com/prometheus/common v0.26.0
+	github.com/prometheus/client_model v0.2.0 // indirect
+	github.com/prometheus/common v0.26.0 // indirect
 	github.com/satori/go.uuid v1.2.0 // indirect
 	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/xelaj/go-dry v0.0.0-20201004191957-aab3eecf0604 // indirect
