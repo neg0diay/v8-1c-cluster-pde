@@ -12,34 +12,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-//type ProcessInfo struct {
-//	UUID                uuid.UUID       `rac:"process" json:"uuid" example:"0e588a25-8354-4344-b935-53442312aa30"`
-//	Host                string          `json:"host" example:"srv"`
-//	Port                int16           `json:"port" example:"1564"`
-//	Pid                 string          `json:"pid" example:"3366"`
-//	Enable              bool            `rac:"is-enable" json:"enable" example:"true"`
-//	Running             bool            `json:"running" example:"true"`
-//	StartedAt           time.Time       `json:"started_at" example:"2018-03-29T11:16:02"`
-//	Use                 bool            `json:"use" example:"true"`
-//
-//	AvailablePerfomance int             `json:"available_perfomance" example:"100"`
-//	Capacity            int             `json:"capacity" example:"1000"`
-//	Connections         int             `json:"connections" example:"7"`
-//	MemorySize          int             `json:"memory_size" example:"1518604"`
-//	MemoryExcessTime    int             `json:"memory_excess_time" example:"0"`
-//	SelectionSize       int             `json:"selection_size" example:"61341"`
-//	AvgBackCallTime     float64         `json:"avg_back_call_time" example:"0.000"`
-//	AvgCallTime         float64         `json:"avg_call_time" example:"0.483"`
-//	AvgDbCallTime       float64         `json:"avg_db_call_time" example:"0.124"`
-//	AvgLockCallTime     float64         `json:"avg_lock_call_time" example:"0.000"`
-//	AvgServerCallTime   float64         `json:"avg_server_call_time" example:"-0.265"`
-//	AvgThreads          float64         `json:"avg_threads" example:"0.281"`
-//	Reverse             bool            `json:"reverse" example:"true"`
-//	Licenses            LicenseInfoList `json:"licenses"`
-//
-//	ClusterID uuid.UUID `json:"cluster_id" example:"0e588a25-8354-4344-b935-53442312aa30"`
-//}
-
 type rpHostsCollector struct {
 	ctx                 context.Context
 	clsuser             string
@@ -177,8 +149,8 @@ func (c *rpHostsCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	for _, сluster := range сlusters {
-		c.wg.Add(1)
 		c.rasapi.AuthenticateCluster(сluster.UUID, c.clsuser, c.clspass)
+		c.wg.Add(1)
 		go c.funInCollect(ch, *сluster)
 	}
 	c.wg.Wait()
