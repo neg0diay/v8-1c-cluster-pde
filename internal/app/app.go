@@ -139,6 +139,10 @@ func Run() error {
 		infobasesCollector.WithCredentionals(conf.CLS_USER, conf.CLS_PASS),
 	)
 
+	//lc := locksCollector.New(rcli,
+	//	locksCollector.WithCredentionals(conf.CLS_USER, conf.CLS_PASS),
+	//)
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	sigchan := make(chan os.Signal, 1)
@@ -166,6 +170,7 @@ func Run() error {
 			sc,
 			cc,
 			ibc,
+			//lc,
 		}
 
 		collecter = puller_multi_collector.New(collectors, puller_multi_collector.WithConfig(
@@ -175,6 +180,7 @@ func Run() error {
 	}
 
 	log.Printf("v8-1c-cluster-pde: runing in %v mode", conf.MODE)
+
 	go collecter.Run(ctx, errchan)
 
 	select {
