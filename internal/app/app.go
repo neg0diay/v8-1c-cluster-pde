@@ -4,12 +4,15 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/Chipazawra/v8-1c-cluster-pde/internal/sessionsCollector"
+	"github.com/prometheus/client_golang/prometheus"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
 
 	"github.com/Chipazawra/v8-1c-cluster-pde/internal/puller"
+	"github.com/Chipazawra/v8-1c-cluster-pde/internal/puller_multi_collector"
 	pusher "github.com/Chipazawra/v8-1c-cluster-pde/internal/pusher"
 	"github.com/Chipazawra/v8-1c-cluster-pde/internal/rpHostsCollector"
 	"github.com/caarlos0/env"
@@ -25,6 +28,7 @@ var (
 	conf          AppConfig
 	RAS_HOST      string
 	RAS_PORT      string
+	RAS_VERSION   string
 	MODE          string
 	PULL_EXPOSE   string
 	PUSH_INTERVAL int
@@ -46,6 +50,8 @@ func init() {
 
 	flag.StringVar(&RAS_HOST, "ras-host", "", "cluster host.")
 	flag.StringVar(&RAS_PORT, "ras-port", "", "cluster port.")
+	flag.StringVar(&RAS_VERSION, "ras-version", "", "cluster version.")
+
 	flag.StringVar(&PULL_EXPOSE, "pull-expose", "", "metrics port.")
 	flag.StringVar(&MODE, "mode", "", "mode push or pull")
 	flag.IntVar(&PUSH_INTERVAL, "push-interval", 0, "mode push or pull")
@@ -106,7 +112,7 @@ func init() {
 
 func Run() error {
 
-	rcli := rascli.NewClient(fmt.Sprintf("%s:%s", conf.RAS_HOST, conf.RAS_PORT))
+	rcli := rascli.NewClient(fmt.Sprintf("%s:%s", conf.RAS_HOST, conf.RAS_PORT), rascli.WithVersion(conf.RAS_VERSION))
 	rcli.AuthenticateAgent(conf.AGNT_USER, conf.AGNT_USER)
 
 	defer rcli.Close()
@@ -119,6 +125,10 @@ func Run() error {
 		rpHostsCollector.WithCredentionals(conf.CLS_USER, conf.CLS_PASS),
 	)
 
+	sc := sessionsCollector.New(rcli,
+		sessionsCollector.WithCredentionals(conf.CLS_USER, conf.CLS_PASS),
+	)
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	sigchan := make(chan os.Signal, 1)
@@ -129,6 +139,7 @@ func Run() error {
 	signal.Notify(sigchan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 
 	var collecter Collecter
+	//var sc_collecter Collecter
 
 	switch conf.MODE {
 	case push:
@@ -139,11 +150,30 @@ func Run() error {
 				PUSH_PORT:     conf.PUSH_PORT,
 			}))
 	case pull:
-		collecter = puller.New(rhc, puller.WithConfig(
+
+		collectors := []prometheus.Collector{rhc, sc}
+
+		collecter = puller_multi_collector.New(collectors, puller_multi_collector.WithConfig(
 			puller.PullerConfig{
 				PULL_EXPOSE: conf.PULL_EXPOSE,
 			}))
+
+		//collecter = puller.New(rhc, puller.WithConfig(
+		//	puller.PullerConfig{
+		//		PULL_EXPOSE: conf.PULL_EXPOSE,
+		//	}))
+		//
+		//sc_collecter = puller.New(sc, puller.WithConfig(
+		//	puller.PullerConfig{
+		//		PULL_EXPOSE: conf.PULL_EXPOSE,
+		//	}))
+
 	}
+
+	//if false {
+	//	log.Printf("v8-1c-cluster-pde: runing in %v mode", conf.MODE)
+	//	go collecter.Run(ctx, errchan)
+	//}
 
 	log.Printf("v8-1c-cluster-pde: runing in %v mode", conf.MODE)
 	go collecter.Run(ctx, errchan)
