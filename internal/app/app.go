@@ -28,6 +28,7 @@ var (
 	conf          AppConfig
 	RAS_HOST      string
 	RAS_PORT      string
+	RAS_VERSION   string
 	MODE          string
 	PULL_EXPOSE   string
 	PUSH_INTERVAL int
@@ -49,6 +50,8 @@ func init() {
 
 	flag.StringVar(&RAS_HOST, "ras-host", "", "cluster host.")
 	flag.StringVar(&RAS_PORT, "ras-port", "", "cluster port.")
+	flag.StringVar(&RAS_VERSION, "ras-version", "", "cluster version.")
+
 	flag.StringVar(&PULL_EXPOSE, "pull-expose", "", "metrics port.")
 	flag.StringVar(&MODE, "mode", "", "mode push or pull")
 	flag.IntVar(&PUSH_INTERVAL, "push-interval", 0, "mode push or pull")
@@ -109,7 +112,7 @@ func init() {
 
 func Run() error {
 
-	rcli := rascli.NewClient(fmt.Sprintf("%s:%s", conf.RAS_HOST, conf.RAS_PORT))
+	rcli := rascli.NewClient(fmt.Sprintf("%s:%s", conf.RAS_HOST, conf.RAS_PORT), rascli.WithVersion(conf.RAS_VERSION))
 	rcli.AuthenticateAgent(conf.AGNT_USER, conf.AGNT_USER)
 
 	defer rcli.Close()

@@ -3,6 +3,7 @@ package app
 type AppConfig struct {
 	RAS_HOST      string `env:"RAS_HOST" envDefault:"localhost"`
 	RAS_PORT      string `env:"RAS_PORT" envDefault:"1545"`
+	RAS_VERSION   string `env:"RAS_VERSION" envDefault:"3.0"`
 	CLS_USER      string `env:"CLS_USER"`
 	CLS_PASS      string `env:"CLS_PASS"`
 	AGNT_USER     string `env:"AGNT_USER"`
