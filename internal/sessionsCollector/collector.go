@@ -149,7 +149,7 @@ func New(rasapi rascli.Api, opts ...opt) prometheus.Collector {
 
 	//sessionLabels := []string{"cluster", "pid", "host", "port", "startedAt"}
 
-	sessionLabels := []string{"cluster", "session", "infobase", "connection", "process", "userName", "host", "app", "locale", "startedAt"}
+	sessionLabels := []string{"cluster", "session", "sessionID", "infobase", "connection", "process", "userName", "host", "app", "locale", "startedAt"}
 
 	rpc := sessionsCollector{
 		ctx:    context.Background(),
@@ -320,7 +320,8 @@ func (c *sessionsCollector) funInCollect(ch chan<- prometheus.Metric, clusterInf
 		var (
 			sessionLabelsVal []string = []string{
 				clusterInfo.Name,                  //"cluster",
-				fmt.Sprintf("%d", sessionInfo.ID), //"session",
+				sessionInfo.UUID.String(),         //session
+				fmt.Sprintf("%d", sessionInfo.ID), //"sessionID",
 				sessionInfo.InfobaseID.String(),   //"infobase",
 				sessionInfo.ConnectionID.String(), //"connection",
 				sessionInfo.ProcessID.String(),    //"process",

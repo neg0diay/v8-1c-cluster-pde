@@ -4,6 +4,8 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/Chipazawra/v8-1c-cluster-pde/internal/connectionsCollector"
+	"github.com/Chipazawra/v8-1c-cluster-pde/internal/infobasesCollector"
 	"github.com/Chipazawra/v8-1c-cluster-pde/internal/sessionsCollector"
 	"github.com/prometheus/client_golang/prometheus"
 	"log"
@@ -129,6 +131,14 @@ func Run() error {
 		sessionsCollector.WithCredentionals(conf.CLS_USER, conf.CLS_PASS),
 	)
 
+	cc := connectionsCollector.New(rcli,
+		connectionsCollector.WithCredentionals(conf.CLS_USER, conf.CLS_PASS),
+	)
+
+	ibc := infobasesCollector.New(rcli,
+		infobasesCollector.WithCredentionals(conf.CLS_USER, conf.CLS_PASS),
+	)
+
 	ctx, cancel := context.WithCancel(context.Background())
 
 	sigchan := make(chan os.Signal, 1)
@@ -151,29 +161,18 @@ func Run() error {
 			}))
 	case pull:
 
-		collectors := []prometheus.Collector{rhc, sc}
+		collectors := []prometheus.Collector{
+			rhc,
+			sc,
+			cc,
+			ibc,
+		}
 
 		collecter = puller_multi_collector.New(collectors, puller_multi_collector.WithConfig(
 			puller.PullerConfig{
 				PULL_EXPOSE: conf.PULL_EXPOSE,
 			}))
-
-		//collecter = puller.New(rhc, puller.WithConfig(
-		//	puller.PullerConfig{
-		//		PULL_EXPOSE: conf.PULL_EXPOSE,
-		//	}))
-		//
-		//sc_collecter = puller.New(sc, puller.WithConfig(
-		//	puller.PullerConfig{
-		//		PULL_EXPOSE: conf.PULL_EXPOSE,
-		//	}))
-
 	}
-
-	//if false {
-	//	log.Printf("v8-1c-cluster-pde: runing in %v mode", conf.MODE)
-	//	go collecter.Run(ctx, errchan)
-	//}
 
 	log.Printf("v8-1c-cluster-pde: runing in %v mode", conf.MODE)
 	go collecter.Run(ctx, errchan)
