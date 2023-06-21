@@ -6,6 +6,7 @@ import (
 	"github.com/Chipazawra/v8-1c-cluster-pde/internal/puller"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -37,6 +38,18 @@ func New(collector []prometheus.Collector, opts ...PullerOption) *PullerMultiCon
 	return p
 }
 
+func withPanic(fn func(w http.ResponseWriter, req *http.Request)) func(w http.ResponseWriter, req *http.Request) {
+	return func(w http.ResponseWriter, req *http.Request) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Println("Panic intercepted!", err)
+				os.Exit(1)
+			}
+		}()
+		fn(w, req)
+	}
+}
+
 func (p *PullerMultiConnector) Run(ctx context.Context, errchan chan<- error) {
 
 	promRegistry := prometheus.NewRegistry()
@@ -45,9 +58,15 @@ func (p *PullerMultiConnector) Run(ctx context.Context, errchan chan<- error) {
 	}
 	//promRegistry.MustRegister(p.collector)
 
+	handler := promhttp.HandlerFor(promRegistry, promhttp.HandlerOpts{
+		//MaxRequestsInFlight: 1,
+		ErrorHandling: promhttp.ContinueOnError,
+		Registry:      promRegistry,
+	})
+
 	mux := http.NewServeMux()
 	mux.Handle("/metrics",
-		promhttp.HandlerFor(promRegistry, promhttp.HandlerOpts{}),
+		handler,
 	)
 	srv := http.Server{
 		Addr:    fmt.Sprintf("%s:%s", "", p.expose),
@@ -56,6 +75,7 @@ func (p *PullerMultiConnector) Run(ctx context.Context, errchan chan<- error) {
 
 	go func() {
 		errchan <- srv.ListenAndServe()
+		//errchan <- http.ListenAndServe(fmt.Sprintf("%s:%s", "", p.expose), handler)
 	}()
 	log.Printf("v8-1c-cluster-pde: puller listen %v", fmt.Sprintf("%s:%s", "", p.expose))
 

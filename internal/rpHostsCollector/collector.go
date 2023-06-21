@@ -12,6 +12,34 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
+//type ProcessInfo struct {
+//	UUID                uuid.UUID       `rac:"process" json:"uuid" example:"0e588a25-8354-4344-b935-53442312aa30"`
+//	Host                string          `json:"host" example:"srv"`
+//	Port                int16           `json:"port" example:"1564"`
+//	Pid                 string          `json:"pid" example:"3366"`
+//	Enable              bool            `rac:"is-enable" json:"enable" example:"true"`
+//	Running             bool            `json:"running" example:"true"`
+//	StartedAt           time.Time       `json:"started_at" example:"2018-03-29T11:16:02"`
+//	Use                 bool            `json:"use" example:"true"`
+//
+//	AvailablePerfomance int             `json:"available_perfomance" example:"100"`
+//	Capacity            int             `json:"capacity" example:"1000"`
+//	Connections         int             `json:"connections" example:"7"`
+//	MemorySize          int             `json:"memory_size" example:"1518604"`
+//	MemoryExcessTime    int             `json:"memory_excess_time" example:"0"`
+//	SelectionSize       int             `json:"selection_size" example:"61341"`
+//	AvgBackCallTime     float64         `json:"avg_back_call_time" example:"0.000"`
+//	AvgCallTime         float64         `json:"avg_call_time" example:"0.483"`
+//	AvgDbCallTime       float64         `json:"avg_db_call_time" example:"0.124"`
+//	AvgLockCallTime     float64         `json:"avg_lock_call_time" example:"0.000"`
+//	AvgServerCallTime   float64         `json:"avg_server_call_time" example:"-0.265"`
+//	AvgThreads          float64         `json:"avg_threads" example:"0.281"`
+//	Reverse             bool            `json:"reverse" example:"true"`
+//	Licenses            LicenseInfoList `json:"licenses"`
+//
+//	ClusterID uuid.UUID `json:"cluster_id" example:"0e588a25-8354-4344-b935-53442312aa30"`
+//}
+
 type rpHostsCollector struct {
 	ctx                 context.Context
 	clsuser             string
@@ -47,7 +75,17 @@ func WithCredentionals(clsuser, clspass string) opt {
 
 func New(rasapi rascli.Api, opts ...opt) prometheus.Collector {
 
-	proccesLabels := []string{"cluster", "pid", "host", "port", "startedAt"}
+	proccesLabels := []string{
+		"cluster",
+		"procces",
+		"proccesID",
+		"host",
+		"port",
+		"enable",
+		"running",
+		"use",
+		"startedAt",
+	}
 
 	rpc := rpHostsCollector{
 		ctx:    context.Background(),
@@ -167,11 +205,15 @@ func (c *rpHostsCollector) funInCollect(ch chan<- prometheus.Metric, clusterInfo
 		var (
 			proccesLabelsVal []string = []string{
 				clusterInfo.Name,
-				proccesInfo.Pid,
-				fmt.Sprint(proccesInfo.Host),
-				fmt.Sprint(proccesInfo.Port),
+				proccesInfo.UUID.String(),    //UUID
+				proccesInfo.Pid,              //Pid
+				fmt.Sprint(proccesInfo.Host), //Host
+				fmt.Sprint(proccesInfo.Port), //Port
+				fmt.Sprint(proccesInfo.Enable),
+				fmt.Sprint(proccesInfo.Running),
+				fmt.Sprint(proccesInfo.Use),
 				// lag MSK+3
-				proccesInfo.StartedAt.In(time.UTC).Format("2006-01-02 15:04:05"),
+				proccesInfo.StartedAt.In(time.UTC).Format("2006-01-02 15:04:05"), //StartedAt
 			}
 		)
 
