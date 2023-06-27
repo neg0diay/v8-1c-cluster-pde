@@ -3,6 +3,7 @@ package locksCollector
 import (
 	"context"
 	"fmt"
+	"github.com/Chipazawra/v8-1c-cluster-pde/internal/collector"
 	"log"
 	"sync"
 	"time"
@@ -22,7 +23,7 @@ import (
 //	Description  string    `rac:"descr" json:"descr" example:"БД(сеанс ,УППБоеваяБаза,разделяемая)"`
 //}
 
-type infobasesCollector struct {
+type locksCollector struct {
 	ctx     context.Context
 	clsuser string
 	clspass string
@@ -39,16 +40,16 @@ type infobasesCollector struct {
 	Locks    *prometheus.Desc
 }
 
-type opt func(*infobasesCollector)
+type opt func(*locksCollector)
 
 func WithCredentionals(clsuser, clspass string) opt {
-	return func(c *infobasesCollector) {
+	return func(c *locksCollector) {
 		c.clsuser = clsuser
 		c.clspass = clspass
 	}
 }
 
-func New(rasapi rascli.Api, opts ...opt) prometheus.Collector {
+func New(rasapi rascli.Api, opts ...opt) collector.Collector {
 
 	infobaseLabels := []string{
 		"cluster",
@@ -60,7 +61,7 @@ func New(rasapi rascli.Api, opts ...opt) prometheus.Collector {
 		"description",
 	}
 
-	rpc := infobasesCollector{
+	rpc := locksCollector{
 		ctx:    context.Background(),
 		rasapi: rasapi,
 
@@ -87,18 +88,18 @@ func New(rasapi rascli.Api, opts ...opt) prometheus.Collector {
 	return &rpc
 }
 
-func (c *infobasesCollector) Describe(ch chan<- *prometheus.Desc) {
+func (c *locksCollector) Describe(ch chan<- *prometheus.Desc) {
 	//ch <- c.rpHosts
 	ch <- c.Locks
 }
 
-func (c *infobasesCollector) Collect(ch chan<- prometheus.Metric) {
+func (c *locksCollector) Collect(ch chan<- prometheus.Metric) {
 
 	start := time.Now()
 
 	сlusters, err := c.rasapi.GetClusters(c.ctx)
 	if err != nil {
-		log.Printf("infobasesCollector: %v", err)
+		log.Printf("locksCollector: %v", err)
 	}
 
 	for _, сluster := range сlusters {
@@ -114,7 +115,7 @@ func (c *infobasesCollector) Collect(ch chan<- prometheus.Metric) {
 		float64(time.Since(start).Milliseconds()))
 }
 
-func (c *infobasesCollector) funInCollect(ch chan<- prometheus.Metric, clusterInfo serialize.ClusterInfo) {
+func (c *locksCollector) funInCollect(ch chan<- prometheus.Metric, clusterInfo serialize.ClusterInfo) {
 
 	var (
 		locksCount int
@@ -132,7 +133,8 @@ func (c *infobasesCollector) funInCollect(ch chan<- prometheus.Metric, clusterIn
 		var (
 			lockLabelsVal []string = []string{
 
-				clusterInfo.Name,                                             //"cluster",
+				//clusterInfo.Name,                                                      //"cluster",
+				clusterInfo.UUID.String(),                                    //"cluster",
 				lockInfo.InfobaseID.String(),                                 //"infobase",
 				lockInfo.ConnectionID.String(),                               //"connection",
 				lockInfo.SessionID.String(),                                  //"session",
@@ -169,4 +171,8 @@ func (c *infobasesCollector) funInCollect(ch chan<- prometheus.Metric, clusterIn
 		clusterInfo.Name)
 
 	c.wg.Done()
+}
+
+func (c *locksCollector) GetName() string {
+	return "locks"
 }

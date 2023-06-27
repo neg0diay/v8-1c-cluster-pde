@@ -3,6 +3,7 @@ package connectionsCollector
 import (
 	"context"
 	"fmt"
+	"github.com/Chipazawra/v8-1c-cluster-pde/internal/collector"
 	"log"
 	"sync"
 	"time"
@@ -47,7 +48,7 @@ func WithCredentionals(clsuser, clspass string) opt {
 	}
 }
 
-func New(rasapi rascli.Api, opts ...opt) prometheus.Collector {
+func New(rasapi rascli.Api, opts ...opt) collector.Collector {
 
 	connectionLabels := []string{
 		"cluster",
@@ -124,7 +125,8 @@ func (c *connectionsCollector) funInCollect(ch chan<- prometheus.Metric, cluster
 	connections.Each(func(connectionInfo *serialize.ConnectionShortInfo) {
 		var (
 			sessionLabelsVal []string = []string{
-				clusterInfo.Name,                                                      //"cluster",
+				//clusterInfo.Name,                                                      //"cluster",
+				clusterInfo.UUID.String(),                                             //"cluster",
 				connectionInfo.InfobaseID.String(),                                    //"infobase",
 				connectionInfo.UUID.String(),                                          //"connection",
 				fmt.Sprintf("%d", connectionInfo.ID),                                  //"connectionID",
@@ -148,4 +150,8 @@ func (c *connectionsCollector) funInCollect(ch chan<- prometheus.Metric, cluster
 		clusterInfo.Name)
 
 	c.wg.Done()
+}
+
+func (c *connectionsCollector) GetName() string {
+	return "connections"
 }

@@ -3,6 +3,7 @@ package rpHostsCollector
 import (
 	"context"
 	"fmt"
+	"github.com/Chipazawra/v8-1c-cluster-pde/internal/collector"
 	"log"
 	"sync"
 	"time"
@@ -45,7 +46,7 @@ func WithCredentionals(clsuser, clspass string) opt {
 	}
 }
 
-func New(rasapi rascli.Api, opts ...opt) prometheus.Collector {
+func New(rasapi rascli.Api, opts ...opt) collector.Collector {
 
 	proccesLabels := []string{
 		"cluster",
@@ -176,7 +177,8 @@ func (c *rpHostsCollector) funInCollect(ch chan<- prometheus.Metric, clusterInfo
 
 		var (
 			proccesLabelsVal []string = []string{
-				clusterInfo.Name,
+				//clusterInfo.Name,                                                      //"cluster",
+				clusterInfo.UUID.String(),    //"cluster",
 				proccesInfo.UUID.String(),    //UUID
 				proccesInfo.Pid,              //Pid
 				fmt.Sprint(proccesInfo.Host), //Host
@@ -307,4 +309,8 @@ func (c *rpHostsCollector) funInCollect(ch chan<- prometheus.Metric, clusterInfo
 		clusterInfo.Name)
 
 	c.wg.Done()
+}
+
+func (c *rpHostsCollector) GetName() string {
+	return "rp_hosts"
 }

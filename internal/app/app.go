@@ -4,10 +4,13 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/Chipazawra/v8-1c-cluster-pde/internal/clustersCollector"
+	"github.com/Chipazawra/v8-1c-cluster-pde/internal/collector"
 	"github.com/Chipazawra/v8-1c-cluster-pde/internal/connectionsCollector"
 	"github.com/Chipazawra/v8-1c-cluster-pde/internal/infobasesCollector"
+	"github.com/Chipazawra/v8-1c-cluster-pde/internal/locksCollector"
 	"github.com/Chipazawra/v8-1c-cluster-pde/internal/sessionsCollector"
-	"github.com/prometheus/client_golang/prometheus"
+	//"github.com/prometheus/client_golang/prometheus"
 	"log"
 	"os"
 	"os/signal"
@@ -139,9 +142,13 @@ func Run() error {
 		infobasesCollector.WithCredentionals(conf.CLS_USER, conf.CLS_PASS),
 	)
 
-	//lc := locksCollector.New(rcli,
-	//	locksCollector.WithCredentionals(conf.CLS_USER, conf.CLS_PASS),
-	//)
+	lc := locksCollector.New(rcli,
+		locksCollector.WithCredentionals(conf.CLS_USER, conf.CLS_PASS),
+	)
+
+	clc := clustersCollector.New(rcli,
+		clustersCollector.WithCredentionals(conf.CLS_USER, conf.CLS_PASS),
+	)
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -165,12 +172,13 @@ func Run() error {
 			}))
 	case pull:
 
-		collectors := []prometheus.Collector{
+		collectors := []collector.Collector{
 			rhc,
 			sc,
 			cc,
 			ibc,
-			//lc,
+			lc,
+			clc,
 		}
 
 		collecter = puller_multi_collector.New(collectors, puller_multi_collector.WithConfig(

@@ -3,6 +3,7 @@ package sessionsCollector
 import (
 	"context"
 	"fmt"
+	"github.com/Chipazawra/v8-1c-cluster-pde/internal/collector"
 	"log"
 	"sync"
 	"time"
@@ -145,7 +146,7 @@ func WithCredentionals(clsuser, clspass string) opt {
 	}
 }
 
-func New(rasapi rascli.Api, opts ...opt) prometheus.Collector {
+func New(rasapi rascli.Api, opts ...opt) collector.Collector {
 
 	//sessionLabels := []string{"cluster", "pid", "host", "port", "startedAt"}
 
@@ -319,7 +320,8 @@ func (c *sessionsCollector) funInCollect(ch chan<- prometheus.Metric, clusterInf
 	sessions.Each(func(sessionInfo *serialize.SessionInfo) {
 		var (
 			sessionLabelsVal []string = []string{
-				clusterInfo.Name,                  //"cluster",
+				//clusterInfo.Name,                                                      //"cluster",
+				clusterInfo.UUID.String(),         //"cluster",
 				sessionInfo.UUID.String(),         //session
 				fmt.Sprintf("%d", sessionInfo.ID), //"sessionID",
 				sessionInfo.InfobaseID.String(),   //"infobase",
@@ -395,136 +397,8 @@ func (c *sessionsCollector) funInCollect(ch chan<- prometheus.Metric, clusterInf
 		clusterInfo.Name)
 
 	c.wg.Done()
+}
 
-	//workingProcesses.Each(func(proccesInfo *serialize.ProcessInfo) {
-	//
-	//	var (
-	//		proccesLabelsVal []string = []string{
-	//			clusterInfo.Name,
-	//			proccesInfo.Pid,
-	//			fmt.Sprint(proccesInfo.Host),
-	//			fmt.Sprint(proccesInfo.Port),
-	//			// lag MSK+3
-	//			proccesInfo.StartedAt.In(time.UTC).Format("2006-01-02 15:04:05"),
-	//		}
-	//	)
-	//
-	//	ch <- prometheus.MustNewConstMetric(
-	//		c.MemorySize,
-	//		prometheus.GaugeValue,
-	//		float64(proccesInfo.MemorySize),
-	//		proccesLabelsVal...,
-	//	)
-	//
-	//	ch <- prometheus.MustNewConstMetric(
-	//		c.Connections,
-	//		prometheus.GaugeValue,
-	//		float64(proccesInfo.Connections),
-	//		proccesLabelsVal...,
-	//	)
-	//
-	//	ch <- prometheus.MustNewConstMetric(
-	//		c.AvgThreads,
-	//		prometheus.GaugeValue,
-	//		float64(proccesInfo.AvgThreads),
-	//		proccesLabelsVal...,
-	//	)
-	//
-	//	ch <- prometheus.MustNewConstMetric(
-	//		c.AvailablePerfomance,
-	//		prometheus.GaugeValue,
-	//		float64(proccesInfo.AvailablePerfomance),
-	//		proccesLabelsVal...,
-	//	)
-	//
-	//	ch <- prometheus.MustNewConstMetric(
-	//		c.Capacity,
-	//		prometheus.GaugeValue,
-	//		float64(proccesInfo.Capacity),
-	//		proccesLabelsVal...,
-	//	)
-	//
-	//	ch <- prometheus.MustNewConstMetric(
-	//		c.MemoryExcessTime,
-	//		prometheus.GaugeValue,
-	//		float64(proccesInfo.MemoryExcessTime),
-	//		proccesLabelsVal...,
-	//	)
-	//
-	//	ch <- prometheus.MustNewConstMetric(
-	//		c.SelectionSize,
-	//		prometheus.GaugeValue,
-	//		float64(proccesInfo.SelectionSize),
-	//		proccesLabelsVal...,
-	//	)
-	//
-	//	ch <- prometheus.MustNewConstMetric(
-	//		c.AvgBackCallTime,
-	//		prometheus.GaugeValue,
-	//		float64(proccesInfo.AvgBackCallTime),
-	//		proccesLabelsVal...,
-	//	)
-	//
-	//	ch <- prometheus.MustNewConstMetric(
-	//		c.AvgCallTime,
-	//		prometheus.GaugeValue,
-	//		float64(proccesInfo.AvgCallTime),
-	//		proccesLabelsVal...,
-	//	)
-	//
-	//	ch <- prometheus.MustNewConstMetric(
-	//		c.AvgDbCallTime,
-	//		prometheus.GaugeValue,
-	//		float64(proccesInfo.AvgDbCallTime),
-	//		proccesLabelsVal...,
-	//	)
-	//
-	//	ch <- prometheus.MustNewConstMetric(
-	//		c.AvgLockCallTime,
-	//		prometheus.GaugeValue,
-	//		float64(proccesInfo.AvgLockCallTime),
-	//		proccesLabelsVal...,
-	//	)
-	//
-	//	ch <- prometheus.MustNewConstMetric(
-	//		c.AvgServerCallTime,
-	//		prometheus.GaugeValue,
-	//		float64(proccesInfo.AvgServerCallTime),
-	//		proccesLabelsVal...,
-	//	)
-	//	ch <- prometheus.MustNewConstMetric(
-	//		c.Enable,
-	//		prometheus.GaugeValue,
-	//		func(fl bool) float64 {
-	//			if fl {
-	//				return 1.0
-	//			} else {
-	//				return 0.0
-	//			}
-	//		}(proccesInfo.Enable),
-	//		proccesLabelsVal...,
-	//	)
-	//	ch <- prometheus.MustNewConstMetric(
-	//		c.Running,
-	//		prometheus.GaugeValue,
-	//		func(fl bool) float64 {
-	//			if fl {
-	//				return 1.0
-	//			} else {
-	//				return 0.0
-	//			}
-	//		}(proccesInfo.Running),
-	//		proccesLabelsVal...,
-	//	)
-	//
-	//	rpHostsCount++
-	//})
-	//
-	//ch <- prometheus.MustNewConstMetric(
-	//	c.rpHosts,
-	//	prometheus.GaugeValue,
-	//	float64(rpHostsCount),
-	//	clusterInfo.Name)
-	//
-	//c.wg.Done()
+func (c *sessionsCollector) GetName() string {
+	return "sessions"
 }

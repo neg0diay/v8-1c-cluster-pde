@@ -3,6 +3,7 @@ package puller_multi_collector
 import (
 	"context"
 	"fmt"
+	"github.com/Chipazawra/v8-1c-cluster-pde/internal/collector"
 	"github.com/Chipazawra/v8-1c-cluster-pde/internal/puller"
 	"log"
 	"net/http"
@@ -13,7 +14,7 @@ import (
 )
 
 type PullerMultiConnector struct {
-	collector []prometheus.Collector
+	collector []collector.Collector
 	expose    string
 }
 
@@ -26,7 +27,7 @@ func WithConfig(config puller.PullerConfig) PullerOption {
 	}
 }
 
-func New(collector []prometheus.Collector, opts ...PullerOption) *PullerMultiConnector {
+func New(collector []collector.Collector, opts ...PullerOption) *PullerMultiConnector {
 	p := &PullerMultiConnector{
 		collector: collector,
 	}
@@ -52,22 +53,24 @@ func withPanic(fn func(w http.ResponseWriter, req *http.Request)) func(w http.Re
 
 func (p *PullerMultiConnector) Run(ctx context.Context, errchan chan<- error) {
 
-	promRegistry := prometheus.NewRegistry()
+	mux := http.NewServeMux()
+
 	for _, collector := range p.collector {
+		promRegistry := prometheus.NewRegistry()
 		promRegistry.MustRegister(collector)
+		handler := promhttp.HandlerFor(promRegistry, promhttp.HandlerOpts{
+			//MaxRequestsInFlight: 1,
+			ErrorHandling: promhttp.ContinueOnError,
+			Registry:      promRegistry,
+		})
+
+		//mux.Handle("/metrics",
+		mux.Handle(fmt.Sprintf("/%s", collector.GetName()),
+			handler,
+		)
 	}
 	//promRegistry.MustRegister(p.collector)
 
-	handler := promhttp.HandlerFor(promRegistry, promhttp.HandlerOpts{
-		//MaxRequestsInFlight: 1,
-		ErrorHandling: promhttp.ContinueOnError,
-		Registry:      promRegistry,
-	})
-
-	mux := http.NewServeMux()
-	mux.Handle("/metrics",
-		handler,
-	)
 	srv := http.Server{
 		Addr:    fmt.Sprintf("%s:%s", "", p.expose),
 		Handler: mux,

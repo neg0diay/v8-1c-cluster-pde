@@ -2,6 +2,7 @@ package infobasesCollector
 
 import (
 	"context"
+	"github.com/Chipazawra/v8-1c-cluster-pde/internal/collector"
 	uuid "github.com/satori/go.uuid"
 	"log"
 	"sync"
@@ -78,7 +79,7 @@ func WithCredentionals(clsuser, clspass string) opt {
 	}
 }
 
-func New(rasapi rascli.Api, opts ...opt) prometheus.Collector {
+func New(rasapi rascli.Api, opts ...opt) collector.Collector {
 
 	infobaseLabels := []string{
 		"cluster",
@@ -183,7 +184,8 @@ func (c *infobasesCollector) funInCollect(ch chan<- prometheus.Metric, clusterIn
 
 		var (
 			infobaseLabelsVal []string = []string{
-				clusterInfo.Name,                  //"cluster",
+				//clusterInfo.Name,                                                      //"cluster",
+				clusterInfo.UUID.String(),         //"cluster",
 				infobaseSummaryInfo.UUID.String(), //"infobase",
 				infobaseSummaryInfo.Name,          //"name",
 				infobaseSummaryInfo.Description,   //"description",
@@ -231,4 +233,8 @@ func (c *infobasesCollector) funInCollect(ch chan<- prometheus.Metric, clusterIn
 		clusterInfo.Name)
 
 	c.wg.Done()
+}
+
+func (c *infobasesCollector) GetName() string {
+	return "infobases"
 }
