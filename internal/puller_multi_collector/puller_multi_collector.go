@@ -64,12 +64,10 @@ func (p *PullerMultiConnector) Run(ctx context.Context, errchan chan<- error) {
 			Registry:      promRegistry,
 		})
 
-		//mux.Handle("/metrics",
 		mux.Handle(fmt.Sprintf("/%s", collector.GetName()),
 			handler,
 		)
 	}
-	//promRegistry.MustRegister(p.collector)
 
 	srv := http.Server{
 		Addr:    fmt.Sprintf("%s:%s", "", p.expose),
@@ -78,7 +76,6 @@ func (p *PullerMultiConnector) Run(ctx context.Context, errchan chan<- error) {
 
 	go func() {
 		errchan <- srv.ListenAndServe()
-		//errchan <- http.ListenAndServe(fmt.Sprintf("%s:%s", "", p.expose), handler)
 	}()
 	log.Printf("v8-1c-cluster-pde: puller listen %v", fmt.Sprintf("%s:%s", "", p.expose))
 
